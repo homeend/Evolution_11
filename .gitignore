@@ -1,0 +1,9 @@
+*.class
+*.log
+
+.DS_store
+
+target
+project/target
+
+.idea
