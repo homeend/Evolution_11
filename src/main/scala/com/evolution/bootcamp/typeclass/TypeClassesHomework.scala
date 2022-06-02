@@ -1,7 +1,5 @@
 package com.evolution.bootcamp.typeclass
 
-import com.evolution.bootcamp.typeclass.TypeClassesHomework.Foldable.Monoid
-
 /**
  * Try to accomplish as many tasks as you can
  */
@@ -123,15 +121,15 @@ object TypeClassesHomework {
       override def combine(x: String, y: String): String = x + y
     }
 
-//    implicit def optionMonoid[A](implicit monoid: Monoid[A]) = new Monoid[Option[A]] {
+    //    implicit def optionMonoid[A](implicit monoid: Monoid[A]) = new Monoid[Option[A]] {
     implicit def optionMonoid[A: Monoid] = new Monoid[Option[A]] {
       override def empty: Option[A] = Option(Monoid[A].empty)
 
       override def combine(x: Option[A], y: Option[A]): Option[A] = (x, y) match {
         case (Some(a), Some(b)) => Option(Monoid[A].combine(a, b))
-//        case (a, None) => a
-//        case (None, b) => b
-//        case (None, None) => None
+        //        case (a, None) => a
+        //        case (None, b) => b
+        //        case (None, None) => None
         case _ => x.orElse(y)
       }
     }
@@ -186,9 +184,11 @@ object TypeClassesHomework {
 
       def ap[A, B](fab: F[A => B])(fa: F[A]): F[B] // "ap" here stands for "apply" but it's better to avoid using it
 
-      override def product[A, B](fa: F[A], fb: F[B]): F[(A, B)] = ??? // TODO Implement using `ap` and `map`
+      override def product[A, B](fa: F[A], fb: F[B]): F[(A, B)] = ap(map(fa)(a => (b: B) => (a, b)))(fb)
 
-      def map2[A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z] = ??? // TODO Implement using `map` and `product`
+      def map2[A, B, Z](fa: F[A], fb: F[B])(f: (A, B) => Z): F[Z] = map(product(fa, fb)) {
+        ab => f(ab._1, ab._2)
+      }
     }
 
     trait Applicative[F[_]] extends Apply[F] {
@@ -196,7 +196,13 @@ object TypeClassesHomework {
     }
 
     // TODO Implement Applicative instantce for Option
-    implicit val optionApplicative: Applicative[Option] = ??? // Keep in mind that Option has flatMap
+    implicit val optionApplicative: Applicative[Option] = new Applicative[Option] {
+      override def pure[A](a: A): Option[A] = Option(a)
+
+      override def ap[A, B](fab: Option[A => B])(fa: Option[A]): Option[B] = fab.flatMap(f => fa.map(f))
+
+      override def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa.map(f)
+    }
 
     // TODO Implement traverse using `map2`
     def traverse[F[_] : Applicative, A, B](as: List[A])(f: A => F[B]): F[List[B]] = ???
